@@ -16,5 +16,6 @@ public class Partner {
     private String legal_address;
     private String inn;
     private int rating;
+    private int totalSales; ;
 }
 
