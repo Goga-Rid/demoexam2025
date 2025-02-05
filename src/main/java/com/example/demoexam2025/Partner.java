@@ -8,14 +8,13 @@ import lombok.*;
 @AllArgsConstructor
 public class Partner {
     private int partnerId;
-    private String name;
-    private String legalAddress;
+    private String partner_type;
+    private String partner_name;
+    private String director;
+    private String email;
+    private String phone;
+    private String legal_address;
     private String inn;
-    private String directorName;
-    private String contactPhone;
-    private String contactEmail;
-    private String logo;
     private int rating;
-    private String history;
 }
 
