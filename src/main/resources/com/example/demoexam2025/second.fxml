@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox prefHeight="463.0" prefWidth="613.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17.0.12" fx:controller="com.example.demoexam2025.SecondController">
+    <Label text="Тип партнера:" />
+    <TextField fx:id="typeField" promptText="ОАО, ЗАО, ИП, ООО" />
+
+    <Label text="Название компании партнера:" />
+    <TextField fx:id="nameField" promptText="Название" />
+
+    <Label text="ФИО директора:" />
+    <TextField fx:id="directorField" promptText="ФИО" />
+
+    <Label text="Электронная почта:" />
+    <TextField fx:id="emailField" promptText="Email" />
+
+    <Label text="Номер телефона:" />
+    <TextField fx:id="phoneField" promptText="Номер" />
+
+    <Label text="Юридический Адрес:" />
+    <TextField fx:id="addressField" promptText="Почтовый индекс, область, город, ул, № дома" />
+
+    <Label text="ИНН:" />
+    <TextField fx:id="innField" promptText="ИНН" />
+
+    <Button onAction="#saveChanges" text="Сохранить" />
+</VBox>

@@ -17,6 +17,7 @@ public class Partner {
     private String inn;
     private int rating;
     private int totalSales;
+    private int discount;
 
     public Partner(int partnerId, String partnerType, String partnerName, String director, String email, String phone, String legalAddress, String inn, int rating) {
         this.partnerId = partnerId;

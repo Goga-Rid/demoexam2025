@@ -42,6 +42,9 @@ CREATE TABLE product_type (
 \COPY partner_products (product_name, partner_name, quantity, sale_date) FROM '/home/goga_rid/ГИА/2025gia/Ресурсы/Partner_products_import.csv' DELIMITER ',' CSV HEADER;
 \COPY material_type (type, defect_percentage) FROM '/home/goga_rid/ГИА/2025gia/Ресурсы/Material_type_import.csv' DELIMITER ',' CSV HEADER;
 
+ALTER TABLE partners
+    ADD COLUMN total_sales INT DEFAULT 0,  -- Поле для общего количества продаж
+    ADD COLUMN discount INT DEFAULT 0;      -- Поле для размера скидки
 
 
 

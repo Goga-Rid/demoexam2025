@@ -8,9 +8,11 @@ public class PartnerDAO {
     private DBConnection dbConnection = new DBConnection();
 
     //  Создание партнера
-    public void create (Partner newPartner) throws SQLException {
+    public void create(Partner newPartner) throws SQLException {
 
-        String sql = "INSERT INTO partners (partner_id, partner_type, partner_name, director, email, phone, legal_address, inn, rating) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO partners (partner_id, partner_type, partner_name, director," +
+                " email, phone, legal_address, inn, rating)" +
+                " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = dbConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, newPartner.getPartner_type());
@@ -23,15 +25,19 @@ public class PartnerDAO {
             stmt.setInt(8, newPartner.getRating());
             stmt.executeUpdate();
             System.out.println("Новый партнер успешно добавлен!");
-        }catch (SQLException e) {
+        } catch (SQLException e) {
             throw new SQLException(" !!! При создании партнера произошла ошибка: " + e.getMessage() + " !!! ");
         }
     }
 
     //    Изменение полей партнера
-    public void update (int partnerId, String partner_type, String partner_name, String director, String email, String phone, String legal_address, String inn) throws SQLException {
+    public void update(int partner_id ,String partner_type, String partner_name,
+                       String director, String email,
+                       String phone, String legal_address, String inn) throws SQLException {
 
-        String sql = "UPDATE partners SET partner_type = ?, partner_name = ?, director = ?, email = ?, phone = ?, legal_address = ?, inn = ? WHERE partner_id = ?";
+        String sql = "UPDATE partners SET partner_type = ?," +
+                " partner_name = ?, director = ?, email = ?, phone = ?," +
+                " legal_address = ?, inn = ? WHERE partner_id = ?";
 
         try (Connection conn = dbConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, partner_type);
@@ -41,21 +47,24 @@ public class PartnerDAO {
             stmt.setString(5, phone);
             stmt.setString(6, legal_address);
             stmt.setString(7, inn);
+            stmt.setInt(8, partner_id);
             stmt.executeUpdate();
             System.out.println("Изменения полей партнера было успешным!");
-        }catch (SQLException e) {
+        } catch (SQLException e) {
             throw new SQLException(" !!! При изменении полей партнера произошла ошибка: " + e.getMessage() + " !!! ");
         }
     }
 
     //    Получение списка всех партнеров
-    public List<Partner> getAllPartners () throws SQLException {
+    public List<Partner> getAllPartners() throws SQLException {
         List<Partner> partners = new ArrayList<>();
         String sql = "SELECT * FROM partners";
-        try (Connection conn = dbConnection.getConnection(); Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(sql)) {
+        try (Connection conn = dbConnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
                 Partner partner = new Partner(
-                        rs.getInt("partnerId"),
+                        rs.getInt("partner_id"),
                         rs.getString("partner_type"),
                         rs.getString("partner_name"),
                         rs.getString("director"),
@@ -75,39 +84,121 @@ public class PartnerDAO {
     }
 
     //     Поиск партнера по id
-    public Partner getPartner (int partnerId) throws SQLException {
+    public Partner getPartner(int partnerId) throws SQLException {
         String sql = "SELECT * FROM partners WHERE partner_id = ?";
         Partner partner = null;
-        Connection conn = dbConnection.getConnection();
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setInt(1, partnerId);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            partner = new Partner();
-            partner.setPartnerId(partnerId);
-        }
-        return partner;
-    }
 
-    //     Метод, считающий общую сумму продаж партнера, чтобы потом можно было рассчитать скидку для партнера
-    public List<Integer> getSalesByPartner(List<String> partnerNames) throws SQLException {
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, partnerId);
+            ResultSet rs = ps.executeQuery();
 
-        List<Integer> salesByPartner = new ArrayList<>();
-
-        String sql = "SELECT partner_products.partner_name, SUM(partner_products.quantity) AS total_sales FROM partner_products WHERE partner_products.partner_name IN (?) GROUP BY partner_products.partner_name";
-
-        try (Connection conn = dbConnection.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
-            stmt.setObject(1, partnerNames.toArray());
-            while (rs.next()) {
-                String partnerName = rs.getString("partner_name");
-                int totalSales = rs.getInt("total_sales");
-                salesByPartner.add(totalSales);
+            if (rs.next()) {
+                partner = new Partner(
+                        rs.getInt("partner_id"),       // это название колонки соответствует колонке из БД
+                        rs.getString("partner_type"),
+                        rs.getString("partner_name"),
+                        rs.getString("director"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("legal_address"),
+                        rs.getString("inn"),
+                        rs.getInt("rating"),
+                        rs.getInt("total_sales"),
+                        rs.getInt("discount")
+                );
             }
         } catch (SQLException e) {
-            throw new SQLException("Ошибка при получении данных о продажах партнеров: " + e.getMessage());
+            throw new SQLException("Ошибка при получении партнера: " + e.getMessage());
         }
 
-        return salesByPartner;
+        return partner; // Вернуть заполненный объект Partner
     }
+
+
+    //     Метод, считающий общую сумму продаж партнера, чтобы потом можно было рассчитать скидку для партнера
+    public List<Partner> calculateTotalSalesForPartners() throws SQLException {
+        List<Partner> partners = new ArrayList<>();
+        String sql = "SELECT p.*, SUM(pp.quantity) AS total_sales FROM partners p " +
+                "LEFT JOIN partner_products pp ON p.partner_name = pp.partner_name " +
+                "GROUP BY p.partner_id";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Partner partner = new Partner(
+                        rs.getInt("partner_id"),
+                        rs.getString("partner_type"),
+                        rs.getString("partner_name"),
+                        rs.getString("director"),
+                        rs.getString("email"),
+                        rs.getString("phone"),
+                        rs.getString("legal_address"),
+                        rs.getString("inn"),
+                        rs.getInt("rating")
+                );
+
+                // Получаем общее количество продаж
+                int totalSales = rs.getInt("total_sales");
+                partner.setTotalSales(totalSales); // Устанавливаем общее количество продаж
+
+                // Устанавливаем скидку в зависимости от total_sales
+                if (totalSales < 10000) {
+                    partner.setDiscount(0);
+                } else if (totalSales < 50000) {
+                    partner.setDiscount(5);
+                } else if (totalSales < 300000) {
+                    partner.setDiscount(10);
+                } else {
+                    partner.setDiscount(15);
+                }
+
+                partners.add(partner);
+            }
+        } catch (SQLException e) {
+            throw new SQLException("Ошибка при получении общего количества продаж: " + e.getMessage());
+        }
+
+        return partners;
+    }
+
+
+    public void updateTotalSales() throws SQLException {
+        // SQL запрос для обновления total_sales
+        String sql = "UPDATE partners p " +
+                "SET total_sales = COALESCE((SELECT SUM(pp.quantity) FROM partner_products pp WHERE pp.partner_name = p.partner_name), 0)";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            // Выполняем обновление
+            int updatedRows = stmt.executeUpdate();
+            System.out.println("Обновлено строк: " + updatedRows);
+        } catch (SQLException e) {
+            throw new SQLException("Ошибка при обновлении общих продаж: " + e.getMessage());
+        }
+    }
+
+    public void updateDiscounts() throws SQLException {
+        // SQL запрос для обновления скидок
+        String sql = "UPDATE partners SET discount = " +
+                "CASE " +
+                "WHEN total_sales < 10000 THEN 0 " +
+                "WHEN total_sales >= 10000 AND total_sales < 50000 THEN 5 " +
+                "WHEN total_sales >= 50000 AND total_sales < 300000 THEN 10 " +
+                "WHEN total_sales >= 300000 THEN 15 " +
+                "END";
+
+        try (Connection conn = dbConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            // Выполняем обновление
+            int updatedRows = stmt.executeUpdate();
+            System.out.println("Обновлено строк: " + updatedRows);
+        } catch (SQLException e) {
+            throw new SQLException("Ошибка при обновлении скидок: " + e.getMessage());
+        }
+    }
+
 
 }
